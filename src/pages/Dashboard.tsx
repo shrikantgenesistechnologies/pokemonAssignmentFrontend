@@ -97,7 +97,7 @@ const PokemonTable: React.FC = () => {
       align: 'center',
       renderCell: (params) => (
         <Box>
-          <Tooltip title="Like">
+          <Tooltip title={params.row.userFavoriteStatus === 'like' ? 'unlike' : 'like'} placement="left">
             <Button
               variant="contained"
               size="small"
@@ -112,10 +112,10 @@ const PokemonTable: React.FC = () => {
               <ThumbUpOffAlt
                 sx={{ color: params.row.userFavoriteStatus === 'like' ? 'green' : 'black' }}
               />{' '}
-              {params.row.totalLike}
+              { params.row.totalLike}
             </Button>
           </Tooltip>
-          <Tooltip title="Dislike">
+          <Tooltip title={params.row.userFavoriteStatus === 'dislike' ? 'remove dislike' : 'dislike'} placement="right">
             <Button
               variant="contained"
               size="small"
