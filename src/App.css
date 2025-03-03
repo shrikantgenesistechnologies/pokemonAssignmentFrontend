@@ -1,0 +1,70 @@
+.forms-wrapper{
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+#pokemon-grid .MuiDataGrid-columnSeparator{
+  display: none
+}
+
+#pokemon-grid .MuiDataGrid-cell:focus, #pokemon-grid .MuiDataGrid-cell:focus-within, #pokemon-grid .MuiDataGrid-columnHeader:focus, #pokemon-grid .MuiDataGrid-columnHeader:focus-within{
+  outline: unset;
+}
+
+.alert-box {
+  position: absolute;
+  right: 30px;
+  top: 30px;
+  width: 32%;
+}
+
+.account {
+  display: flex;
+  justify-content: space-evenly;
+  gap: 20px;
+  align-items: baseline;
+  cursor: pointer;
+}
+
+
+/* Width and height of the scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+/* Track (the area behind the scrollbar) */
+::-webkit-scrollbar-track {
+  background: #f1f1f1; 
+  border-radius: 10px;
+}
+
+/* Handle (the moving part of the scrollbar) */
+::-webkit-scrollbar-thumb {
+  background: #888; 
+  border-radius: 10px;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #555; 
+}
+
+* {
+  -ms-overflow-style: none; /* Hide scrollbar */
+}
+
+::-ms-scrollbar {
+  width: 8px;
+}
+
+::-ms-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-ms-scrollbar-thumb {
+  background: #888;
+  border-radius: 10px;
+}
