@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { PayloadAction } from '@reduxjs/toolkit';
 import { call, put, takeLatest } from 'redux-saga/effects';
 import { fetchData } from '../../utils/api';
@@ -16,7 +15,6 @@ import {
   setUserDetailsFailed,
 } from '../slices/auth-slice';
 import { ILogin, IRegister, IUser } from '../../store/rootState';
-import { getCookie, setCookie } from '../../utils/cookieHelper';
 
 function* registration(
   action: PayloadAction<{
@@ -37,23 +35,20 @@ function* registration(
     });
 
     if (response) {
-      setCookie('authToken', response.data.accessToken, 7);
-      setCookie('id', response.data.id, 7);
-
-      yield put(registerSuccess(response.data));
+      yield put(registerSuccess(response.message));
       if (action.payload?.callback) {
         action.payload.callback('Register Success');
       }
     } else {
-      yield put(registerFailed(response.message[0] ?? response.message));
+      yield put(registerFailed(response.message));
       if (action.payload?.callback) {
         action.payload.callback('Register Failed');
       }
     }
-  } catch (error: any) {
-    yield put(registerFailed(error.message));
+  } catch (error) {
+    yield put(registerFailed((error as Error).message ?? 'Register Failed'));
     if (action.payload?.callback) {
-      action.payload.callback('Register Error');
+      action.payload.callback('Register Failed');
     }
   }
 }
@@ -71,40 +66,35 @@ function* login(
     });
 
     if (response) {
-      setCookie('authToken', response.data.accessToken, 7);
-      setCookie('id', response.data.id, 7);
-
-      yield put(loginSuccess(response.data));
+      yield put(loginSuccess(response.message));
       if (action.payload?.callback) {
         action.payload.callback('Login Success');
       }
     } else {
-      yield put(loginFailed(response.message[0] ?? response.message));
+      yield put(loginFailed(response.message));
       if (action.payload?.callback) {
         action.payload.callback('Login Failed');
       }
     }
-  } catch (error: any) {
-    yield put(loginFailed(error.message));
+  } catch (error) {
+    yield put(loginFailed((error as Error).message ?? 'Login Failed'));
     if (action.payload?.callback) {
-      action.payload.callback('Login Error');
+      action.payload.callback('Login Failed');
     }
   }
 }
 
-function* getUserDetails(action: PayloadAction<{ id: string; token: string }>): Generator {
+function* getUserDetails(action: PayloadAction<{ id: string; token?: string }>): Generator {
   try {
-    const response = yield call(fetchData, `/users/${action.payload.id}`, {
-      token: action.payload.token,
-    });
+    const response = yield call(fetchData, `/users/${action.payload.id}`, {});
 
     if (response) {
       yield put(setUserDetails(response.data as IUser));
     } else {
-      yield put(setUserDetailsFailed(response.message[0] ?? response.message));
+      yield put(setUserDetailsFailed(response.message));
     }
-  } catch (error: any) {
-    yield put(setUserDetailsFailed(error.message));
+  } catch (error) {
+    yield put(setUserDetailsFailed((error as Error).message));
   }
 }
 
@@ -112,14 +102,13 @@ function* logout(): Generator {
   try {
     const response = yield call(fetchData, '/auth/logout', {
       method: 'POST',
-      token: getCookie('authToken') ?? '',
     });
 
     if (response) {
-      yield put(clearToken());
+      yield put(clearToken(response.message));
     }
-  } catch (error: any) {
-    console.log('Error in Logout: ', error.message);
+  } catch (error) {
+    yield put(clearToken((error as Error).message));
   }
 }
 

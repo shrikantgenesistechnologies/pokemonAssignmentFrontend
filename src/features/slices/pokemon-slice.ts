@@ -1,22 +1,19 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { InitialRootState } from '../../store/initialState';
-import { removeCookie } from '../../utils/cookieHelper';
+import { deleteAllCookies } from '../../utils/cookieHelper';
 import { Pokemon } from '../../store/rootState';
 
 const pokemonSlice = createSlice({
   name: 'pokemonList',
   initialState: InitialRootState,
   reducers: {
-    fetchPokemonLists: (
-      state,
-      action: PayloadAction<{ token: string; skip: number; take: number }>,
-    ) => {
+    fetchPokemonLists: (state, action: PayloadAction<{ skip: number; take: number }>) => {
       state.loading = true;
       state.pokemon.skip = action.payload.skip;
       state.pokemon.take = action.payload.take;
     },
     setPokemonLists: (state, action) => {
+      state.loading = false;
       state.pokemon.listofPokemon = action.payload.data;
       state.pokemon.metadata = action.payload.metadata;
     },
@@ -24,9 +21,11 @@ const pokemonSlice = createSlice({
       state.error = true;
       state.loading = false;
       state.message = action.payload.message;
-      if (action.payload.includes('Unauthorized')) {
+      if (action.payload.includes('Unauthorized') || action.payload.includes('Token is invalid')) {
+        state.message = 'Session expired. Please login again.';
         state.user.token = '';
         state.user.id = '';
+        deleteAllCookies();
         state.pokemon = {
           listofPokemon: [],
           skip: 1,
@@ -38,15 +37,10 @@ const pokemonSlice = createSlice({
             totalRecords: 0,
           },
         };
-        state.message = 'Session expired. Please login again.';
-        removeCookie('authToken');
-        removeCookie('id');
       }
     },
-    updatePokemonStatus: (
-      state,
-      _action: PayloadAction<{ token: string; id: string; status: string }>,
-    ) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    updatePokemonStatus: (state, _action: PayloadAction<{ id: string; status: string }>) => {
       state.loading = true;
     },
     updatePokemonListSuccess: (
@@ -88,12 +82,11 @@ const pokemonSlice = createSlice({
       state.error = true;
       state.loading = false;
       state.message = action.payload.message;
-      if (action.payload.includes('Unauthorized')) {
+      if (action.payload.includes('Unauthorized') || action.payload.includes('Token is invalid')) {
         state.user.token = '';
         state.user.id = '';
         state.message = 'Session expired. Please login again.';
-        removeCookie('authToken');
-        removeCookie('id');
+        deleteAllCookies();
       }
     },
   },

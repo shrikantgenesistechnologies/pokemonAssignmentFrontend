@@ -2,7 +2,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { InitialRootState } from '../../store/initialState';
 import { ILogin, IRegister, IUser } from '../../store/rootState';
-import { getCookie, removeCookie } from '../../utils/cookieHelper';
+import { deleteAllCookies, getCookie } from '../../utils/cookieHelper';
 
 const authSlice = createSlice({
   name: 'auth',
@@ -19,10 +19,11 @@ const authSlice = createSlice({
       state.error = false;
       state.loading = true;
     },
-    registerSuccess: (state, action: PayloadAction<{ id: string; accessToken: string }>) => {
-      state.user.token = action.payload.accessToken;
-      state.user.id = action.payload.id;
+    registerSuccess: (state, action: PayloadAction<string>) => {
+      state.user.token = getCookie('accessToken') ?? '';
+      state.user.id = getCookie('id') ?? '';
       state.loading = false;
+      state.message = action.payload;
     },
     registerFailed: (state, action: PayloadAction<string>) => {
       state.error = true;
@@ -41,10 +42,11 @@ const authSlice = createSlice({
       state.error = false;
       state.loading = true;
     },
-    loginSuccess: (state, action: PayloadAction<{ id: string; accessToken: string }>) => {
-      state.user.token = action.payload.accessToken;
-      state.user.id = action.payload.id;
+    loginSuccess: (state, action: PayloadAction<string>) => {
+      state.user.token = getCookie('accessToken') ?? '';
+      state.user.id = getCookie('id') ?? '';
       state.loading = false;
+      state.message = action.payload;
     },
     loginFailed: (state, action: PayloadAction<string>) => {
       state.error = true;
@@ -56,36 +58,44 @@ const authSlice = createSlice({
       state.loading = false;
       state.message = '';
     },
-    fetchUserDetails: (state, _action: PayloadAction<{ id: string; token: string }>) => {
+    fetchUserDetails: (state, _action: PayloadAction<{ id: string; token?: string }>) => {
       state.loading = true;
     },
     setUserDetails: (state, action: PayloadAction<IUser>) => {
-      state.user.id = action.payload.id;
+      state.user.token = getCookie('accessToken') ?? '';
+      state.user.id = getCookie('id') ?? '';
+      state.loading = false;
       state.user.name = action.payload.name;
-      state.user.token = action.payload.token;
       state.user.email = action.payload.email;
     },
     setUserDetailsFailed: (state, action: PayloadAction<string>) => {
       state.error = true;
       state.loading = false;
+      state.user.id = '';
+      state.user.token = '';
       state.message = action.payload;
-      if (action.payload.includes('Unauthorized')) {
-        state.user.token = '';
-        state.user.id = '';
+      if (action.payload.includes('Unauthorized') || action.payload.includes('Token is invalid')) {
         state.message = 'Session expired. Please login again.';
-        removeCookie('authToken');
-        removeCookie('id');
+        deleteAllCookies();
       }
     },
     setToken: (state) => {
-      state.user.token = getCookie('authToken') ?? '';
+      state.user.token = getCookie('accessToken') ?? '';
       state.user.id = getCookie('id') ?? '';
     },
-    clearToken: (state) => {
+    clearToken: (state, action: PayloadAction<string>) => {
       state.user.token = '';
       state.user.id = '';
-      removeCookie('authToken');
-      removeCookie('id');
+      state.message = '';
+      state.error = false;
+      state.loading = false;
+      if (action.payload.includes('Logout successful')) {
+        deleteAllCookies();
+      }
+      if (action.payload.includes('Unauthorized') || action.payload.includes('Token is invalid')) {
+        state.message = 'Session expired. Please login again.';
+        deleteAllCookies();
+      }
     },
     logoutRequest: (state) => {
       state.loading = true;

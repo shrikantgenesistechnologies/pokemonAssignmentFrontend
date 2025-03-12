@@ -1,15 +1,16 @@
 import { Navigate, Outlet } from 'react-router-dom';
-import { useAppSelector } from './store/hooks';
+import { useEffect } from 'react';
 import { getCookie } from './utils/cookieHelper';
 
 function ProtectedRoute() {
-  const {
-    user: { id, token },
-  } = useAppSelector((state) => state.user);
+  const authToken = getCookie('accessToken');
+  useEffect(() => {
+    if (!authToken) {
+      handleRoute();
+    }
+  }, [authToken]);
 
-  if (!token && !id && !getCookie('authToken') && !getCookie('id')) {
-    return <Navigate to="/login" replace />;
-  }
+  const handleRoute = () => <Navigate to="/login" replace />;
 
   return <Outlet />;
 }

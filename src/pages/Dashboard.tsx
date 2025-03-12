@@ -1,5 +1,4 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-import React, { useEffect } from 'react';
+import React, { Fragment, useEffect } from 'react';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { Button, Box, Tooltip, Typography } from '@mui/material';
 import { ThumbUpOffAlt, ThumbDownOffAlt } from '@mui/icons-material';
@@ -9,6 +8,7 @@ import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { fetchPokemonLists, updatePokemonStatus } from '../features/slices/pokemon-slice';
 import { getCookie } from '../utils/cookieHelper';
 import { fetchUserDetails } from '../features/slices/auth-slice';
+import Loader from '../components/Loader';
 
 const PokemonTable: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -20,31 +20,35 @@ const PokemonTable: React.FC = () => {
     page: metadata.page,
     pageSize: take,
   });
+  const authToken = getCookie('accessToken');
+  const userId = getCookie('id');
 
   useEffect(() => {
-    const authToken = getCookie('authToken');
-    const userId = getCookie('id');
-    if (!authToken || authToken === '') {
+    if (!authToken) {
       navigate('/login', { replace: true });
       return;
     }
-    dispatch(fetchUserDetails({ id: userId ?? id, token: authToken ?? token }));
-  }, [dispatch, skip, isFavoriteClick]);
+
+    dispatch(fetchUserDetails({ id: userId ?? id }));
+  }, [dispatch, token, skip, id, navigate, authToken, userId]);
 
   useEffect(() => {
-    if (token || getCookie('authToken')) {
-      setPaginationModel({ page: 0, pageSize: take }); // Reset pagination on login
+    if (authToken) {
+      setPaginationModel({ page: 0, pageSize: take });
     }
-  }, [token || getCookie('authToken')]);
-
-  useEffect(() => {
-    fetchPokemon(paginationModel.page, paginationModel.pageSize);
-  }, [paginationModel.page, paginationModel.pageSize, token]);
+  }, [authToken, take]);
 
   const fetchPokemon = (page = 0, pageSize = take) => {
     const skipValue = page * pageSize;
-    dispatch(fetchPokemonLists({ token, skip: skipValue, take: pageSize }));
+    dispatch(fetchPokemonLists({ skip: skipValue, take: pageSize }));
   };
+
+  useEffect(() => {
+    if (authToken) {
+      fetchPokemon(paginationModel.page, paginationModel.pageSize);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paginationModel.page, paginationModel.pageSize, authToken]);
 
   const handlePagination = (event: { page: number; pageSize: number }) => {
     setPaginationModel({
@@ -55,7 +59,7 @@ const PokemonTable: React.FC = () => {
 
   const handleAction = (id: string, status: string) => {
     setIsFavoriteClick(!isFavoriteClick);
-    dispatch(updatePokemonStatus({ token, id, status }));
+    dispatch(updatePokemonStatus({ id, status }));
   };
 
   const columns: GridColDef[] = [
@@ -97,7 +101,10 @@ const PokemonTable: React.FC = () => {
       align: 'center',
       renderCell: (params) => (
         <Box>
-          <Tooltip title={params.row.userFavoriteStatus === 'like' ? 'unlike' : 'like'} placement="left">
+          <Tooltip
+            title={params.row.userFavoriteStatus === 'like' ? 'unlike' : 'like'}
+            placement="left"
+          >
             <Button
               variant="contained"
               size="small"
@@ -112,10 +119,13 @@ const PokemonTable: React.FC = () => {
               <ThumbUpOffAlt
                 sx={{ color: params.row.userFavoriteStatus === 'like' ? 'green' : 'black' }}
               />{' '}
-              { params.row.totalLike}
+              {params.row.totalLike}
             </Button>
           </Tooltip>
-          <Tooltip title={params.row.userFavoriteStatus === 'dislike' ? 'remove dislike' : 'dislike'} placement="right">
+          <Tooltip
+            title={params.row.userFavoriteStatus === 'dislike' ? 'remove dislike' : 'dislike'}
+            placement="right"
+          >
             <Button
               variant="contained"
               size="small"
@@ -134,42 +144,47 @@ const PokemonTable: React.FC = () => {
   ];
 
   return (
-    <>
-      <Header />
-      <Box
-        id="pokemon-grid"
-        sx={{ width: '100%', marginTop: '100px', height: '700px', top: '0px' }}
-      >
-        <Typography variant="h5" sx={{ mb: 2, textAlign: 'center' }}>
-          Pokémon Grid
-        </Typography>
-        <DataGrid
-          rows={listofPokemon}
-          columns={columns}
-          disableRowSelectionOnClick
-          disableColumnMenu
-          disableColumnResize={true}
-          paginationMode="server"
-          paginationModel={paginationModel}
-          sortingOrder={['asc', 'desc']}
-          rowCount={metadata.totalRecords}
-          pageSizeOptions={[20, 50, 100]}
-          onPaginationModelChange={handlePagination}
-          sx={{
-            '& .MuiDataGrid-columnHeaders': {
-              position: 'sticky',
-              top: 0,
-              backgroundColor: 'white',
-              zIndex: 1,
-            },
-            '& .MuiDataGrid-columnHeaderTitle': {
-              fontWeight: 'bold',
-              fontSize: '15px',
-            },
-          }}
-        />
-      </Box>
-    </>
+    <Fragment>
+      {!userId && <Loader />}
+      {userId && (
+        <>
+          <Header />
+          <Box
+            id="pokemon-grid"
+            sx={{ width: '100%', marginTop: '100px', height: '700px', top: '0px' }}
+          >
+            <Typography variant="h5" sx={{ mb: 2, textAlign: 'center' }}>
+              Pokémon Grid
+            </Typography>
+            <DataGrid
+              rows={listofPokemon}
+              columns={columns}
+              disableRowSelectionOnClick
+              disableColumnMenu
+              disableColumnResize={true}
+              paginationMode="server"
+              paginationModel={paginationModel}
+              sortingOrder={['asc', 'desc']}
+              rowCount={metadata.totalRecords}
+              pageSizeOptions={[20, 50, 100]}
+              onPaginationModelChange={handlePagination}
+              sx={{
+                '& .MuiDataGrid-columnHeaders': {
+                  position: 'sticky',
+                  top: 0,
+                  backgroundColor: 'white',
+                  zIndex: 1,
+                },
+                '& .MuiDataGrid-columnHeaderTitle': {
+                  fontWeight: 'bold',
+                  fontSize: '15px',
+                },
+              }}
+            />
+          </Box>
+        </>
+      )}
+    </Fragment>
   );
 };
 

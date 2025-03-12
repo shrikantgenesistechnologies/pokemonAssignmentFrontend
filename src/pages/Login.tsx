@@ -1,5 +1,4 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-import React, { useEffect, useState } from 'react';
+import React, { Fragment, useEffect, useState } from 'react';
 import {
   TextField,
   Button,
@@ -15,10 +14,13 @@ import { useAppDispatch } from '../store/hooks';
 import { loginRequest } from '../features/slices/auth-slice';
 import { useNavigate } from 'react-router-dom';
 import { getCookie } from '../utils/cookieHelper';
+import Loader from '../components/Loader';
 
 const LoginForm: React.FC = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const userId = getCookie('id');
+  const authToken = getCookie('accessToken');
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState({
@@ -27,14 +29,12 @@ const LoginForm: React.FC = () => {
   });
 
   useEffect(() => {
-    const authToken = getCookie('authToken');
-
     if (authToken) {
       navigate('/dashboard', { replace: true });
       return;
     }
     navigate('/login', { replace: true });
-  }, [dispatch]);
+  }, [authToken, userId, navigate]);
 
   const togglePasswordVisibility = () => {
     setShowPassword((prev) => !prev);
@@ -90,61 +90,81 @@ const LoginForm: React.FC = () => {
   };
 
   return (
-    <Box className="forms-wrapper">
-      <Box
-        sx={{ width: 500, mx: 'auto', p: 3, boxShadow: 3, borderRadius: 2, textAlign: 'center' }}
-      >
-        <Logo />
-        <Typography variant="h5" sx={{ mb: 2 }}>
-          Login
-        </Typography>
-
-        <form>
-          <TextField
-            fullWidth
-            label="Email"
-            variant="outlined"
-            name="email"
-            type="email"
-            value={formData.email}
-            onChange={handleChange}
-            sx={{ mb: 4 }}
-            error={error.email}
-            onBlur={onBlur}
-          />
-          <TextField
-            fullWidth
-            label="Password"
-            variant="outlined"
-            name="password"
-            type={showPassword ? 'text' : 'password'}
-            value={formData.password}
-            onChange={handleChange}
-            sx={{ mb: 4 }}
-            error={error.password}
-            onBlur={onBlur}
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton onClick={togglePasswordVisibility} edge="end">
-                    {showPassword ? <VisibilityOff /> : <Visibility />}
-                  </IconButton>
-                </InputAdornment>
-              ),
+    <Fragment>
+      {userId && <Loader />}
+      {!userId && (
+        <Box className="forms-wrapper">
+          <Box
+            sx={{
+              width: 500,
+              mx: 'auto',
+              p: 3,
+              boxShadow: 3,
+              borderRadius: 2,
+              textAlign: 'center',
             }}
-          />
-          <Button type="button" variant="contained" color="primary" fullWidth onClick={onSubmit}>
-            Login
-          </Button>
-        </form>
-        <Typography variant="body2" sx={{ mt: 2 }}>
-          Please create a account?{' '}
-          <Link href="/register" underline="hover">
-            Sign Up
-          </Link>
-        </Typography>
-      </Box>
-    </Box>
+          >
+            <Logo />
+            <Typography variant="h5" sx={{ mb: 2 }}>
+              Login
+            </Typography>
+
+            <form>
+              <TextField
+                fullWidth
+                label="Email"
+                variant="outlined"
+                name="email"
+                type="email"
+                value={formData.email}
+                onChange={handleChange}
+                sx={{ mb: 4 }}
+                error={error.email}
+                onBlur={onBlur}
+              />
+              <TextField
+                fullWidth
+                label="Password"
+                variant="outlined"
+                name="password"
+                type={showPassword ? 'text' : 'password'}
+                value={formData.password}
+                onChange={handleChange}
+                sx={{ mb: 4 }}
+                error={error.password}
+                onBlur={onBlur}
+                slotProps={{
+                  input: {
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton onClick={togglePasswordVisibility} edge="end">
+                          {showPassword ? <VisibilityOff /> : <Visibility />}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  },
+                }}
+              />
+              <Button
+                type="button"
+                variant="contained"
+                color="primary"
+                fullWidth
+                onClick={onSubmit}
+              >
+                Login
+              </Button>
+            </form>
+            <Typography variant="body2" sx={{ mt: 2 }}>
+              Please create a account?{' '}
+              <Link href="/register" underline="hover">
+                Sign Up
+              </Link>
+            </Typography>
+          </Box>
+        </Box>
+      )}
+    </Fragment>
   );
 };
 

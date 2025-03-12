@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { call, put, takeLatest } from 'redux-saga/effects';
 import { fetchData } from '../../utils/api';
 import {
@@ -15,10 +14,10 @@ function* fetchAllOrganizations(): Generator {
     if (response) {
       yield put(setOrganizationsSuccess(response.data as IOrganizations[]));
     } else {
-      yield put(setOrganizationsFailed(response.message[0] ?? response.message));
+      yield put(setOrganizationsFailed(response.message));
     }
-  } catch (error: any) {
-    yield put(setOrganizationsFailed(error.message));
+  } catch (error) {
+    yield put(setOrganizationsFailed((error as Error).message));
   }
 }
 
